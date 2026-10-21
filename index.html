@@ -151,24 +151,114 @@ img{display:block}
 @media (prefers-reduced-motion:reduce){#run{transition:none}}
 </style>
 <style>
-/* Añadidos para Apps Script: carga, login y usuario */
 html{background:var(--bg)}
 body{min-height:100%}
-#loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);font-weight:600}
+/* Carga y login */
+#loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);font-weight:600;padding:0 16px;text-align:center}
 #loading b{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--fg);text-transform:uppercase}
-#loading b span,#login h1 span{color:var(--accent)}
-#login{max-width:440px;margin:0 auto;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:16px;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#loading b span,#login h1 span,.logo span{color:var(--accent)}
+#login{max-width:440px;margin:0 auto;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 #login h1{font-family:var(--display);font-weight:900;font-size:3.2rem;line-height:1;margin:0;text-transform:uppercase}
-#login p.lead{margin:0;color:var(--muted);font-size:1.05rem;line-height:1.4}
-#login label{font-weight:700;font-size:.9rem}
-#email{width:100%;box-sizing:border-box;font:inherit;font-size:1.1rem;padding:14px;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--fg)}
-#email:focus{outline:none;border-color:var(--accent)}
+.lead{margin:0;color:var(--muted);font-size:1.02rem;line-height:1.45}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld>label,.flabel{font-weight:700;font-size:.9rem}
+.inp{width:100%;box-sizing:border-box;font:inherit;font-size:1.05rem;padding:13px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--fg)}
+.inp:focus{outline:none;border-color:var(--accent)}
+textarea.inp{resize:vertical;min-height:96px;line-height:1.4}
+select.inp{appearance:auto}
 .err{margin:0;color:#ff8a80;font-weight:600;min-height:1.3em}
+.ok{margin:0;color:#7ee2a8;font-weight:600}
 .privacy{margin:0;font-size:.85rem;color:var(--muted);line-height:1.45;border-left:3px solid var(--accent);padding-left:10px}
-.who{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.9rem;color:var(--muted);margin-top:-8px}
+.spacer{flex:1}
+.credit{margin:0;padding-top:28px;text-align:center;font-size:.82rem;line-height:1.5;color:var(--muted)}
+.credit b{color:var(--fg);font-weight:700}
+.credit.in{padding-top:8px;border-top:1px solid var(--line)}
+
+/* Barra superior y vistas */
+.view{max-width:640px;margin:0 auto;padding-block:8px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+.appbar{max-width:640px;margin:0 auto;padding-block:16px 4px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px}
+.burger{width:46px;height:46px;flex-shrink:0;border:0;border-radius:12px;background:var(--panel);display:grid;place-items:center;position:relative}
+.burger i,.burger i::before,.burger i::after{display:block;width:20px;height:2.5px;border-radius:2px;background:var(--fg);position:relative}
+.burger i::before,.burger i::after{content:"";position:absolute;left:0}
+.burger i::before{top:-7px}.burger i::after{top:7px}
+.burger .dot{position:absolute;top:7px;right:7px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.logo{font-family:var(--display);font-weight:900;font-size:2.3rem;line-height:1;margin:0;text-transform:uppercase;flex:1}
+.vtitle{font-family:var(--display);font-weight:900;font-size:1.9rem;text-transform:uppercase;margin:0;line-height:1}
+.who{font-size:.9rem;color:var(--muted)}
 .who b{color:var(--fg)}
-.who button{border:0;background:transparent;color:var(--muted);text-decoration:underline;padding:6px 0;font-size:.85rem}
-.fatal{max-width:440px;text-align:center;line-height:1.5}
+
+/* Menú lateral */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(84vw,320px);background:var(--panel);z-index:21;display:flex;flex-direction:column;gap:4px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 18px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px);padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:14px;box-shadow:8px 0 30px rgba(0,0,0,.4);overflow-y:auto}
+#drawer .dhead{padding:6px 8px 16px;border-bottom:1px solid var(--line);margin-bottom:8px}
+#drawer .dhead b{display:block;font-size:1.05rem}
+#drawer .dhead span{color:var(--muted);font-size:.85rem}
+#drawer button{display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;padding:13px 10px;border-radius:10px;font-weight:700;font-size:1.02rem}
+#drawer button[aria-current="true"]{background:var(--panel2);color:var(--accent)}
+#drawer button .ic{width:26px;text-align:center;font-size:1.15rem}
+#drawer button .count{margin-left:auto;background:var(--accent);color:#14161a;border-radius:999px;font-size:.78rem;padding:2px 8px}
+#drawer hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+#drawer .out{color:var(--muted);font-weight:600}
+
+/* Filtros extra del banco */
+.bankfilters{display:flex;flex-direction:column;gap:10px;margin:8px 0 12px}
+.matsel{display:flex;align-items:center;gap:10px}
+.matsel label{font-weight:700;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.matsel select{flex:1;min-width:0;padding:9px 10px;font-size:.95rem}
+.mat{color:var(--muted);font-size:.78rem}
+
+/* Subir ejercicio */
+.card2{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.step-n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#14161a;font-size:.78rem;font-weight:800;margin-right:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:2px solid var(--line);background:transparent;border-radius:999px;padding:8px 13px;font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:7px}
+.chips button i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chips button[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 30%,transparent)}
+.exist{background:var(--panel2);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.exist p{margin:0;font-size:.9rem;line-height:1.4;color:var(--muted)}
+.exist p b{color:var(--fg)}
+.minis{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.mini{flex:0 0 92px;display:flex;flex-direction:column;gap:4px;font-size:.75rem;line-height:1.2}
+.mini img{width:92px;height:69px;object-fit:cover;border-radius:8px;background:#fff}
+.warn{margin:0;background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:10px;padding:10px 12px;font-size:.9rem;line-height:1.4}
+.photo{display:flex;align-items:center;justify-content:center;min-height:170px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);font-weight:600;text-align:center;padding:12px;cursor:pointer;overflow:hidden;background:var(--panel2)}
+.photo img{max-width:100%;max-height:320px;border-radius:8px;background:#fff}
+.counter{font-size:.78rem;color:var(--muted);text-align:right}
+
+/* Listas: mis ejercicios, historial, revisión */
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--panel);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.item b{font-size:1rem;line-height:1.25}
+.item small{color:var(--muted);font-size:.82rem}
+.pill{flex-shrink:0;font-size:.74rem;font-weight:800;border-radius:999px;padding:3px 9px;color:#14161a;background:var(--pc,#9aa1ad)}
+.comment{margin:2px 0 0;font-size:.9rem;line-height:1.4;background:var(--panel2);border-radius:8px;padding:8px 10px}
+.empty2{background:var(--panel);border-radius:14px;padding:22px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty2 button{border:0;border-radius:10px;background:var(--accent);color:#14161a;font-weight:800;padding:10px 16px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--panel);border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.tile b{font-family:var(--display);font-weight:900;font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.tile span{font-size:.75rem;color:var(--muted);font-weight:600;line-height:1.2}
+.loadmsg{color:var(--muted);text-align:center;padding:20px 0}
+.rev{background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.rev>img{width:100%;max-height:360px;object-fit:contain;background:#fff}
+.rev .rb{padding:14px;display:flex;flex-direction:column;gap:10px}
+.rev h3{margin:0;font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;line-height:1}
+.rev p{margin:0;line-height:1.45;font-size:.95rem}
+.similar{font-size:.88rem;line-height:1.4;border-radius:8px;padding:8px 10px;background:var(--panel2)}
+.similar.hit{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.rev .row2{display:flex;gap:8px;align-items:center}
+.rev .row2 label{font-weight:700;font-size:.85rem;color:var(--muted)}
+.rev .row2 input{width:90px}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 11px;font-size:.82rem;font-weight:600}
+.acts3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.acts3 button{border:0;border-radius:12px;padding:13px 4px;font-weight:800;font-size:.9rem;white-space:nowrap}
+.acts3 .ap{background:#389060;color:#fff}
+.acts3 .co{background:var(--accent);color:#14161a}
+.acts3 .re{background:var(--line)}
+.acts3 button:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -176,70 +266,139 @@ body{min-height:100%}
 <section id="loading"><b>Circuito<span>.</span></b><span id="loadMsg">Cargando ejercicios…</span></section>
 
 <section id="login" hidden>
+  <div class="spacer"></div>
   <h1>Circuito<span>.</span></h1>
   <p class="lead">Entrena los circuitos de Educación Física desde tu móvil.</p>
-  <label for="email">Tu correo corporativo</label>
-  <input id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="usuario@g.educaand.es">
+  <div class="fld"><label for="email">Tu correo corporativo</label>
+  <input class="inp" id="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="usuario@g.educaand.es"></div>
+  <div class="fld" id="passRow" hidden><label for="pass">Contraseña de profesor</label>
+  <input class="inp" id="pass" type="password" autocomplete="current-password"></div>
   <button class="go" id="enter">Entrar</button>
   <p class="err" id="loginErr"></p>
   <p class="privacy">La app registra tus entrenamientos para el seguimiento de la asignatura.</p>
+  <div class="spacer"></div>
+  <p class="credit">Aplicación desarrollada por <b>Manuel Rojas Lara</b><br>Profesor de Educación Física · IES Cantillana</p>
 </section>
 
-<section id="setup" hidden>
-  <div class="brand">
-    <h1>Circuito<span>.</span></h1>
-    <div class="total">Duración total<b id="totalTime">0:00</b></div>
-  </div>
-  <div class="who"><span>Hola, <b id="whoName"></b></span><button id="logout">No soy yo</button></div>
+<div id="app" hidden>
+  <header class="appbar">
+    <button class="burger" id="menuBtn" aria-label="Abrir menú"><i></i><span class="dot" id="menuDot" hidden></span></button>
+    <h1 class="logo">Circuito<span>.</span></h1>
+    <div class="total" id="totalBox">Duración total<b id="totalTime">0:00</b></div>
+  </header>
 
-  <div class="tabs" role="tablist">
-    <button role="tab" data-mode="preset">Circuitos</button>
-    <button role="tab" data-mode="custom">Crear el mío</button>
-    <button role="tab" data-mode="timer">Solo tiempo</button>
-  </div>
-
-  <div id="pPreset" class="circs"></div>
-
-  <div id="pCustom" hidden>
-    <div class="mine">
-      <div class="mine-head"><div class="label" id="mineTitle">Tu circuito</div><button id="clearMine">Vaciar</button></div>
-      <p class="empty" id="mineEmpty">Toca los ejercicios del banco para añadirlos en el orden en que los quieras hacer.</p>
-      <ol class="sel" id="mineList"></ol>
+  <!-- ENTRENAR -->
+  <section id="vTrain" class="view">
+    <div class="who">Hola, <b id="whoName"></b></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-mode="preset">Circuitos</button>
+      <button role="tab" data-mode="custom">Crear el mío</button>
+      <button role="tab" data-mode="timer">Solo tiempo</button>
     </div>
-    <div class="label" style="margin-top:18px">Banco de ejercicios</div>
-    <div class="filters" id="filters" style="margin:8px 0 12px"></div>
-    <div class="bank" id="bank"></div>
-  </div>
 
-  <div id="pTimer" hidden>
-    <div class="presets" aria-label="Plantillas">
-      <button data-quick="tabata">Tabata 20/10</button>
-      <button data-quick="hiit">HIIT 40/20</button>
-      <button data-quick="circuito">Circuito 45/15 × 3</button>
+    <div id="pPreset" class="circs"></div>
+
+    <div id="pCustom" hidden>
+      <div class="mine">
+        <div class="mine-head"><div class="label" id="mineTitle">Tu circuito</div><button id="clearMine">Vaciar</button></div>
+        <p class="empty" id="mineEmpty">Toca los ejercicios del banco para añadirlos en el orden en que los quieras hacer.</p>
+        <ol class="sel" id="mineList"></ol>
+      </div>
+      <div class="label" style="margin-top:18px">Banco de ejercicios</div>
+      <div class="bankfilters">
+        <div class="filters" id="filters"></div>
+        <div class="matsel"><label for="matFilter">Material</label><select class="inp" id="matFilter"></select></div>
+      </div>
+      <div class="bank" id="bank"></div>
     </div>
-  </div>
 
-  <div class="group">
-    <h2>Tiempos</h2>
-    <div class="row"><label>Trabajo</label><div class="step" data-k="work"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-    <div class="row"><label>Descanso<small>entre ejercicios</small></label><div class="step" data-k="rest"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-    <div class="row" id="rowExercises"><label>Ejercicios<small>por vuelta</small></label><div class="step" data-k="exercises"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-    <div class="row"><label>Vueltas</label><div class="step" data-k="rounds"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-    <div class="row"><label>Descanso entre vueltas</label><div class="step" data-k="roundRest"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-    <div class="row"><label>Preparación<small>cuenta atrás inicial</small></label><div class="step" data-k="prep"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
-  </div>
+    <div id="pTimer" hidden>
+      <div class="presets" aria-label="Plantillas">
+        <button data-quick="tabata">Tabata 20/10</button>
+        <button data-quick="hiit">HIIT 40/20</button>
+        <button data-quick="circuito">Circuito 45/15 × 3</button>
+      </div>
+    </div>
 
-  <div class="group">
-    <h2>Colores de fondo</h2>
-    <div class="row"><label for="cWork">Trabajo</label><div class="swatch"><input type="color" id="cWork" data-c="cWork"></div></div>
-    <div class="row"><label for="cRest">Descanso</label><div class="swatch"><input type="color" id="cRest" data-c="cRest"></div></div>
-    <div class="row"><label for="cRound">Descanso entre vueltas</label><div class="swatch"><input type="color" id="cRound" data-c="cRound"></div></div>
-  </div>
+    <div class="group">
+      <h2>Tiempos</h2>
+      <div class="row"><label>Trabajo</label><div class="step" data-k="work"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+      <div class="row"><label>Descanso<small>entre ejercicios</small></label><div class="step" data-k="rest"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+      <div class="row" id="rowExercises"><label>Ejercicios<small>por vuelta</small></label><div class="step" data-k="exercises"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+      <div class="row"><label>Vueltas</label><div class="step" data-k="rounds"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+      <div class="row"><label>Descanso entre vueltas</label><div class="step" data-k="roundRest"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+      <div class="row"><label>Preparación<small>cuenta atrás inicial</small></label><div class="step" data-k="prep"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
+    </div>
 
-  <button class="go" id="start">Empezar</button>
-  <p class="note">Calienta unos 5 minutos antes de empezar y prioriza la técnica sobre la velocidad. En los últimos 3 segundos de cada fase suenan tres pitidos: dos cortos y un tercero largo y más agudo que marca el cambio. En Android los pitidos siguen sonando con la app minimizada o la pantalla bloqueada; deja el volumen multimedia alto.</p>
-  <p class="privacy">La app registra tus entrenamientos para el seguimiento de la asignatura.</p>
-</section>
+    <div class="group">
+      <h2>Colores de fondo</h2>
+      <div class="row"><label for="cWork">Trabajo</label><div class="swatch"><input type="color" id="cWork" data-c="cWork"></div></div>
+      <div class="row"><label for="cRest">Descanso</label><div class="swatch"><input type="color" id="cRest" data-c="cRest"></div></div>
+      <div class="row"><label for="cRound">Descanso entre vueltas</label><div class="swatch"><input type="color" id="cRound" data-c="cRound"></div></div>
+    </div>
+
+    <button class="go" id="start">Empezar</button>
+    <p class="note">Calienta unos 5 minutos antes de empezar y prioriza la técnica sobre la velocidad. En los últimos 3 segundos de cada fase suenan tres pitidos: dos cortos y un tercero largo y más agudo que marca el cambio. En Android los pitidos siguen sonando con la app minimizada o la pantalla bloqueada; deja el volumen multimedia alto.</p>
+    <p class="privacy">La app registra tus entrenamientos para el seguimiento de la asignatura.</p>
+    <p class="credit in">Aplicación desarrollada por <b>Manuel Rojas Lara</b><br>Profesor de Educación Física · IES Cantillana</p>
+  </section>
+
+  <!-- SUBIR EJERCICIO -->
+  <section id="vUpload" class="view" hidden>
+    <h2 class="vtitle">Subir ejercicio</h2>
+    <p class="lead">Propón un ejercicio para el banco. Tu profesor lo revisará antes de publicarlo.</p>
+    <div class="card2">
+      <div class="flabel"><span class="step-n">1</span>Tipo de ejercicio <span class="mat">(uno o dos)</span></div>
+      <div class="chips" id="upTipos"></div>
+      <div class="fld"><label for="upMat"><span class="step-n">2</span>Material</label><select class="inp" id="upMat"></select></div>
+    </div>
+    <div class="exist" id="upExisting" hidden></div>
+    <div class="card2">
+      <div class="fld"><label for="upName"><span class="step-n">3</span>Nombre del ejercicio</label>
+        <input class="inp" id="upName" maxlength="80" placeholder="Ej.: Remo con mancuerna a una mano"></div>
+      <p class="warn" id="upSimilar" hidden></p>
+      <div class="fld"><label for="upDesc"><span class="step-n">4</span>Descripción breve</label>
+        <textarea class="inp" id="upDesc" maxlength="400" placeholder="Posición inicial, cómo se hace y un consejo de técnica."></textarea>
+        <div class="counter" id="upCount">0/400</div></div>
+      <div class="fld"><div class="flabel"><span class="step-n">5</span>Foto</div>
+        <label class="photo" for="upFile" id="upPhoto"><span id="upPh">Toca para hacer o elegir una foto</span><img id="upPrev" alt="Vista previa" hidden></label>
+        <input id="upFile" type="file" accept="image/*" hidden></div>
+      <p class="privacy">Sin caras: fotografía a un adulto, hazte la foto de cuello para abajo o usa un dibujo.</p>
+    </div>
+    <button class="go" id="upSend">Enviar ejercicio</button>
+    <p class="err" id="upErr"></p>
+  </section>
+
+  <!-- MIS EJERCICIOS -->
+  <section id="vMine" class="view" hidden>
+    <h2 class="vtitle">Mis ejercicios</h2>
+    <div class="list" id="mineBox"></div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section id="vHistory" class="view" hidden>
+    <h2 class="vtitle">Mi historial</h2>
+    <div id="histBox"></div>
+  </section>
+
+  <!-- REVISAR (profesor) -->
+  <section id="vReview" class="view" hidden>
+    <h2 class="vtitle">Revisar propuestas</h2>
+    <div class="list" id="revBox"></div>
+  </section>
+</div>
+
+<div id="scrim" hidden></div>
+<nav id="drawer" hidden aria-label="Menú">
+  <div class="dhead"><b id="dName"></b><span id="dGroup"></span></div>
+  <button data-view="vTrain"><span class="ic">⏱</span>Entrenar</button>
+  <button data-view="vUpload"><span class="ic">＋</span>Subir ejercicio</button>
+  <button data-view="vMine"><span class="ic">☰</span>Mis ejercicios</button>
+  <button data-view="vHistory"><span class="ic">↺</span>Mi historial</button>
+  <button data-view="vReview" id="dReview" hidden><span class="ic">✓</span>Revisar propuestas<span class="count" id="revCount" hidden></span></button>
+  <hr>
+  <button class="out" id="logout"><span class="ic">↩</span>Cerrar sesión</button>
+</nav>
 
 <section id="run" hidden>
   <div class="top">
@@ -273,25 +432,24 @@ body{min-height:100%}
 
 <script>
 (function(){
-const $=id=>document.getElementById(id);
-const h=(tag,props,...kids)=>{const el=document.createElement(tag);Object.assign(el,props||{});kids.flat().forEach(k=>k!=null&&el.append(k));return el;};
-const fmt=s=>{s=Math.max(0,Math.ceil(s));const m=Math.floor(s/60),r=s%60;return m+":"+String(r).padStart(2,"0");};
-const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
-/* Conexión con tu hoja (Apps Script) */
+/* ---------- Conexión con tu hoja (Apps Script) ---------- */
 const API="https://script.google.com/macros/s/AKfycbx83FY_bKAzDOAT6JJR6pjY2neV2cod-Olln5V8DHgliwmbQcj6TlGRxL06KJXtqIb5/exec";
 const unwrap=r=>r.json().then(j=>{if(!j.ok)throw new Error(j.error||"Error");return j.data;});
-const run=(fn,...a)=>{
-  if(fn==="getDatos")return fetch(API+"?accion=datos").then(unwrap);
-  const body=fn==="login"?{accion:"login",correo:a[0]}:Object.assign({accion:fn},a[0]);
-  return fetch(API,{method:"POST",body:JSON.stringify(body),keepalive:true}).then(unwrap);
-};
-const show=id=>["loading","login","setup","run"].forEach(x=>$(x).hidden=x!==id);
+const getDatos=()=>fetch(API+"?accion=datos").then(unwrap);
+const post=(body,keep)=>fetch(API,{method:"POST",body:JSON.stringify(body),keepalive:!!keep}).then(unwrap);
+const errMsg=e=>((e&&e.message)||"Algo ha fallado. Inténtalo de nuevo.").replace(/^(Exception|Error):\s*/,"");
 
-/* ---------- Datos (vienen de la hoja) ---------- */
-let EX=[],BY={},CIRCUITS=[],user=null;
+const $=id=>document.getElementById(id);
+const h=(tag,props,...kids)=>{const el=document.createElement(tag);Object.assign(el,props||{});kids.flat().forEach(k=>k!=null&&k!==false&&el.append(k));return el;};
+const fmt=s=>{s=Math.max(0,Math.ceil(s));const m=Math.floor(s/60),r=s%60;return m+":"+String(r).padStart(2,"0");};
+const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+const fdate=iso=>{if(!iso)return"";const d=new Date(iso);return d.toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});};
+
+/* ---------- Estado ---------- */
+let EX=[],BY={},CIRCUITS=[],MATS=["Sin material"],TIPOS=["Cardio","Tren superior","Tren inferior","Core"],user=null,clave="",view="vTrain";
 const TAGCOL={"cardio":"var(--cardio)","tren superior":"var(--sup)","tren inferior":"var(--inf)","core":"var(--core)"};
-const TAGORDER=["Cardio","Tren superior","Tren inferior","Core"];
-const colorOf_=t=>TAGCOL[t.toLowerCase()]||"#6b7280";
+const colorOf_=t=>TAGCOL[String(t).toLowerCase()]||"#6b7280";
 const img=id=>(BY[id]&&BY[id].img)||"";
 const tagEls=ids=>ids.map(t=>{const s=h("span",{className:"tag",textContent:t});s.style.setProperty("--c",colorOf_(t));return s;});
 const QUICK={
@@ -299,6 +457,13 @@ const QUICK={
   hiit:{work:40,rest:20,exercises:6,rounds:2,roundRest:60,prep:10},
   circuito:{work:45,rest:15,exercises:6,rounds:3,roundRest:90,prep:10}
 };
+function setData(d){
+  EX=d.ejercicios;BY={};EX.forEach(e=>BY[e.id]=e);CIRCUITS=d.circuitos;
+  if(d.materiales&&d.materiales.length)MATS=d.materiales;
+  if(d.tipos&&d.tipos.length)TIPOS=d.tipos;
+  cfg.mine=(cfg.mine||[]).filter(id=>BY[id]);
+  if(!CIRCUITS.find(c=>c.id===cfg.preset)&&CIRCUITS.length)cfg.preset=CIRCUITS[0].id;
+}
 
 /* ---------- Configuración guardada en el móvil ---------- */
 const LIMITS={work:[5,600,5],rest:[0,600,5],exercises:[1,30,1],rounds:[1,20,1],roundRest:[0,600,5],prep:[0,60,5]};
@@ -309,13 +474,34 @@ try{const s=JSON.parse(store.get(KEY)||"null");if(s)cfg=Object.assign(cfg,s);}ca
 const save=()=>store.set(KEY,JSON.stringify(cfg));
 const isTime=k=>!["exercises","rounds"].includes(k);
 
+/* ---------- Pantallas y menú ---------- */
+const SCREENS=["loading","login","app","run"];
+const show=id=>SCREENS.forEach(x=>$(x).hidden=x!==id);
+function openMenu(){$("drawer").hidden=false;$("scrim").hidden=false;}
+function closeMenu(){$("drawer").hidden=true;$("scrim").hidden=true;}
+$("menuBtn").addEventListener("click",openMenu);
+$("scrim").addEventListener("click",closeMenu);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
+document.querySelectorAll("#drawer [data-view]").forEach(b=>b.addEventListener("click",()=>{closeMenu();go(b.dataset.view);}));
+function go(v){
+  view=v;
+  ["vTrain","vUpload","vMine","vHistory","vReview"].forEach(x=>$(x).hidden=x!==v);
+  document.querySelectorAll("#drawer [data-view]").forEach(b=>b.setAttribute("aria-current",b.dataset.view===v));
+  $("totalBox").hidden=v!=="vTrain";
+  window.scrollTo(0,0);
+  if(v==="vTrain")render();
+  if(v==="vUpload")renderUpload();
+  if(v==="vMine")loadMine();
+  if(v==="vHistory")loadHistory();
+  if(v==="vReview")loadReview();
+}
+
+/* ---------- ENTRENAR ---------- */
 function list(){
   if(cfg.mode==="preset"){const c=CIRCUITS.find(c=>c.id===cfg.preset);return c?c.ids:[];}
   if(cfg.mode==="custom")return cfg.mine;
   return null;
 }
-
-/* ---------- Pintar configuración ---------- */
 function renderPresets(){
   if(!CIRCUITS.length){$("pPreset").replaceChildren(h("p",{className:"empty",textContent:"Todavía no hay circuitos preparados."}));return;}
   $("pPreset").replaceChildren(...CIRCUITS.map(c=>{
@@ -329,11 +515,9 @@ function renderPresets(){
     return b;
   }));
 }
-let filter="all";
+let filter="all",matFilter="all";
 function renderFilters(){
-  const all=[];EX.forEach(e=>e.t.forEach(t=>{if(!all.includes(t))all.push(t);}));
-  all.sort((a,b)=>{const ia=TAGORDER.indexOf(a),ib=TAGORDER.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
-  const opts=[["all","Todos",null]].concat(all.map(t=>[t,t,colorOf_(t)]));
+  const opts=[["all","Todos",null]].concat(TIPOS.map(t=>[t,t,colorOf_(t)]));
   $("filters").replaceChildren(...opts.map(([k,n,c])=>{
     const b=h("button",null,c?h("i"):null,n);
     if(c)b.style.setProperty("--c",c);
@@ -341,13 +525,19 @@ function renderFilters(){
     b.addEventListener("click",()=>{filter=k;renderFilters();renderBank();});
     return b;
   }));
+  const used=MATS.filter(m=>EX.some(e=>e.m===m)).concat([...new Set(EX.map(e=>e.m))].filter(m=>!MATS.includes(m)));
+  $("matFilter").replaceChildren(h("option",{value:"all",textContent:"Todos"}),...used.map(m=>h("option",{value:m,textContent:m})));
+  $("matFilter").value=used.includes(matFilter)?matFilter:"all";
 }
+$("matFilter").addEventListener("change",()=>{matFilter=$("matFilter").value;renderBank();});
 function renderBank(){
-  $("bank").replaceChildren(...EX.filter(e=>filter==="all"||e.t.includes(filter)).map(e=>{
+  const items=EX.filter(e=>(filter==="all"||e.t.includes(filter))&&(matFilter==="all"||e.m===matFilter));
+  if(!items.length){$("bank").replaceChildren(h("p",{className:"empty",textContent:"No hay ejercicios con esos filtros."}));return;}
+  $("bank").replaceChildren(...items.map(e=>{
     const count=cfg.mine.filter(x=>x===e.id).length;
     const b=h("button",{className:"ex"+(count?" on":"")},
       h("img",{src:e.img,alt:""}),
-      h("div",{className:"body"},h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t)),e.m?h("small",{textContent:"Material: "+e.m.toLowerCase(),style:"color:var(--muted);font-size:.78rem"}):null,h("span",{className:"add",textContent:count?"+ Añadir otra vez":"+ Añadir"})),
+      h("div",{className:"body"},h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t)),e.m!=="Sin material"?h("small",{className:"mat",textContent:"Material: "+e.m.toLowerCase()}):null,h("span",{className:"add",textContent:count?"+ Añadir otra vez":"+ Añadir"})),
       count?h("span",{className:"badge",textContent:count>1?"×"+count:"✓"}):null
     );
     b.setAttribute("aria-label","Añadir "+e.n);
@@ -381,7 +571,6 @@ function render(){
   if(cfg.mode==="custom"){renderFilters();renderBank();renderMine();}
   renderTotals();
 }
-
 document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{cfg.mode=b.dataset.mode;
   if(cfg.mode==="preset"){const c=CIRCUITS.find(x=>x.id===cfg.preset);if(c)["work","rest","rounds","roundRest"].forEach(k=>cfg[k]=c[k]);}
   save();render();}));
@@ -401,32 +590,210 @@ document.querySelectorAll(".step").forEach(el=>{
 document.querySelectorAll("[data-c]").forEach(i=>i.addEventListener("input",()=>{cfg[i.dataset.c]=i.value;save();}));
 document.querySelectorAll("[data-quick]").forEach(b=>b.addEventListener("click",()=>{Object.assign(cfg,QUICK[b.dataset.quick]);save();render();}));
 
+/* ---------- Parecidos (para evitar repetidos) ---------- */
+const STOP=new Set(["de","con","en","a","al","el","la","los","las","y","o","un","una","del","por","para"]);
+const words=s=>norm(s).split(" ").filter(w=>w&&!STOP.has(w));
+function parecidos(nombre,lista){
+  const a=words(nombre);if(!a.length)return[];
+  const na=a.join(" ");
+  return lista.filter(e=>{
+    const b=words(e.n);if(!b.length)return false;const nb=b.join(" ");
+    if(na===nb||(na.length>4&&nb.includes(na))||(nb.length>4&&na.includes(nb)))return true;
+    const inter=a.filter(w=>b.includes(w)).length;
+    return inter/Math.max(a.length,b.length)>=0.6;
+  });
+}
+
+/* ---------- SUBIR EJERCICIO ---------- */
+let up={tipos:[],foto:""};
+function renderUpload(){
+  $("upTipos").replaceChildren(...TIPOS.map(t=>{
+    const b=h("button",{type:"button"},h("i"),t);b.style.setProperty("--c",colorOf_(t));
+    b.setAttribute("aria-pressed",up.tipos.includes(t));
+    b.addEventListener("click",()=>{
+      if(up.tipos.includes(t))up.tipos=up.tipos.filter(x=>x!==t);
+      else{up.tipos.push(t);if(up.tipos.length>2)up.tipos.shift();}
+      renderUpload();
+    });
+    return b;
+  }));
+  const cur=$("upMat").value;
+  $("upMat").replaceChildren(...MATS.map(m=>h("option",{value:m,textContent:m})));
+  $("upMat").value=MATS.includes(cur)?cur:MATS[0];
+  renderExisting();checkSimilar();
+}
+function renderExisting(){
+  const box=$("upExisting");
+  if(!up.tipos.length){box.hidden=true;return;}
+  const mat=$("upMat").value;
+  const ya=EX.filter(e=>e.m===mat&&e.t.some(t=>up.tipos.includes(t)));
+  box.hidden=false;
+  if(!ya.length){box.replaceChildren(h("p",null,"Todavía no hay ejercicios de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". ¡El tuyo puede ser el primero!"));return;}
+  box.replaceChildren(
+    h("p",null,"Ya hay ",h("b",{textContent:ya.length+(ya.length===1?" ejercicio":" ejercicios")})," de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". Comprueba que el tuyo no está:"),
+    h("div",{className:"minis"},ya.map(e=>h("div",{className:"mini"},h("img",{src:e.img,alt:""}),h("span",{textContent:e.n}))))
+  );
+}
+function checkSimilar(){
+  const p=parecidos($("upName").value,EX);
+  $("upSimilar").hidden=!p.length;
+  if(p.length)$("upSimilar").textContent="Se parece a: "+p.map(e=>e.n).join(", ")+". Si es el mismo ejercicio, mejor propón otro distinto.";
+}
+$("upMat").addEventListener("change",renderExisting);
+$("upName").addEventListener("input",checkSimilar);
+$("upDesc").addEventListener("input",()=>$("upCount").textContent=$("upDesc").value.length+"/400");
+function resize(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const im=new Image();
+    im.onload=()=>{const max=1000,k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+      const c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
+      const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.8));};
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("No se ha podido leer la foto. Prueba con otra."));};
+    im.src=url;
+  });
+}
+$("upFile").addEventListener("change",async()=>{
+  const f=$("upFile").files[0];if(!f)return;
+  $("upErr").textContent="";
+  try{up.foto=await resize(f);$("upPrev").src=up.foto;$("upPrev").hidden=false;$("upPh").hidden=true;}
+  catch(e){$("upErr").textContent=errMsg(e);}
+});
+$("upSend").addEventListener("click",()=>{
+  const nombre=$("upName").value.trim(),desc=$("upDesc").value.trim();
+  const falta=[];
+  if(!up.tipos.length)falta.push("el tipo");if(!nombre)falta.push("el nombre");if(desc.length<10)falta.push("la descripción");if(!up.foto)falta.push("la foto");
+  if(falta.length){$("upErr").className="err";$("upErr").textContent="Te falta "+falta.join(", ")+".";return;}
+  $("upSend").disabled=true;$("upSend").textContent="Enviando…";$("upErr").textContent="";
+  post({accion:"subir",correo:user.correo,nombre,descripcion:desc,tipos:up.tipos,material:$("upMat").value,foto:up.foto}).then(()=>{
+    up={tipos:[],foto:""};$("upName").value="";$("upDesc").value="";$("upCount").textContent="0/400";$("upFile").value="";
+    $("upPrev").hidden=true;$("upPh").hidden=false;renderUpload();
+    $("upErr").className="ok";$("upErr").textContent="¡Enviado! Tu profesor lo revisará. Puedes ver cómo va en «Mis ejercicios».";
+    window.scrollTo(0,document.body.scrollHeight);
+  }).catch(e=>{$("upErr").className="err";$("upErr").textContent=errMsg(e);})
+  .finally(()=>{$("upSend").disabled=false;$("upSend").textContent="Enviar ejercicio";});
+});
+
+/* ---------- MIS EJERCICIOS ---------- */
+const ESTCOL={"Pendiente":"#9aa1ad","Aprobado":"#7ee2a8","Corregir":"#ffcf3f","Rechazado":"#ff8a80"};
+const ESTTXT={"Pendiente":"Pendiente de revisar","Aprobado":"Aprobado · ya está en el banco","Corregir":"Para corregir","Rechazado":"No aceptado"};
+function loadMine(){
+  const box=$("mineBox");box.replaceChildren(h("p",{className:"loadmsg",textContent:"Cargando…"}));
+  post({accion:"misAportaciones",correo:user.correo}).then(items=>{
+    if(!items.length){const b=h("button",{textContent:"Subir mi primer ejercicio"});b.addEventListener("click",()=>go("vUpload"));
+      box.replaceChildren(h("div",{className:"empty2"},h("span",{textContent:"Aún no has subido ningún ejercicio."}),b));return;}
+    box.replaceChildren(...items.map(it=>{const p=h("span",{className:"pill",textContent:ESTTXT[it.estado]||it.estado});p.style.setProperty("--pc",ESTCOL[it.estado]||"#9aa1ad");
+      return h("div",{className:"item"},h("div",{className:"item-top"},h("b",{textContent:it.nombre}),p),
+        h("small",{textContent:[it.tipo,it.material,fdate(it.fecha)].filter(Boolean).join(" · ")}),
+        it.comentario?h("p",{className:"comment",textContent:"Profesor: "+it.comentario}):null);}));
+  }).catch(e=>box.replaceChildren(h("p",{className:"err",textContent:errMsg(e)})));
+}
+
+/* ---------- HISTORIAL ---------- */
+function weekKey(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.getTime();}
+function loadHistory(){
+  const box=$("histBox");box.replaceChildren(h("p",{className:"loadmsg",textContent:"Cargando…"}));
+  post({accion:"historial",correo:user.correo}).then(items=>{
+    const done=items.filter(i=>i.completo);
+    const mins=Math.round(items.reduce((a,i)=>a+i.real,0)/60);
+    const weeks=new Set(done.map(i=>weekKey(i.fecha)));
+    let w=weekKey(Date.now()),streak=0;const WK=7*864e5;
+    if(!weeks.has(w))w-=WK;
+    while(weeks.has(w)){streak++;w-=WK;}
+    const tiles=h("div",{className:"tiles"},
+      h("div",{className:"tile"},h("b",{textContent:done.length}),h("span",{textContent:"Entrenos completados"})),
+      h("div",{className:"tile"},h("b",{textContent:mins}),h("span",{textContent:"Minutos entrenados"})),
+      h("div",{className:"tile"},h("b",{textContent:streak}),h("span",{textContent:streak===1?"Semana seguida":"Semanas seguidas"})));
+    if(!items.length){const b=h("button",{textContent:"Ir a entrenar"});b.addEventListener("click",()=>go("vTrain"));
+      box.replaceChildren(tiles,h("div",{className:"empty2",style:"margin-top:12px"},h("span",{textContent:"Aquí aparecerán tus entrenamientos."}),b));return;}
+    box.replaceChildren(tiles,h("div",{className:"list",style:"margin-top:14px"},items.map(i=>{
+      const p=h("span",{className:"pill",textContent:i.completo?"Completado":"Sin terminar"});p.style.setProperty("--pc",i.completo?"#7ee2a8":"#9aa1ad");
+      return h("div",{className:"item"},h("div",{className:"item-top"},h("b",{textContent:i.circuito||i.modo||"Entreno"}),p),
+        h("small",{textContent:fdate(i.fecha)+" · "+Math.max(1,Math.round(i.real/60))+" min"}));
+    })));
+  }).catch(e=>box.replaceChildren(h("p",{className:"err",textContent:errMsg(e)})));
+}
+
+/* ---------- REVISAR (profesor) ---------- */
+function setRevCount(n){$("revCount").hidden=!n;$("revCount").textContent=n;$("menuDot").hidden=!n;}
+function refreshCount(){if(user&&user.profesor)post({accion:"pendientes",correo:user.correo,clave,solo:"total"}).then(r=>setRevCount(r.total)).catch(()=>{});}
+function loadReview(){
+  const box=$("revBox");box.replaceChildren(h("p",{className:"loadmsg",textContent:"Cargando propuestas…"}));
+  post({accion:"pendientes",correo:user.correo,clave}).then(r=>{
+    setRevCount(r.total);
+    if(!r.items.length){box.replaceChildren(h("div",{className:"empty2"},h("span",{textContent:"No hay propuestas pendientes."})));return;}
+    const more=r.total>r.items.length?h("p",{className:"loadmsg",textContent:"Mostrando "+r.items.length+" de "+r.total+". Al revisar estas, recarga para ver más."}):null;
+    box.replaceChildren(...r.items.map(revCard),more);
+  }).catch(e=>box.replaceChildren(h("p",{className:"err",textContent:errMsg(e)})));
+}
+function revCard(it){
+  const sim=parecidos(it.nombre,EX);
+  const nota=h("input",{className:"inp",type:"number",min:0,max:10,step:0.5,placeholder:"—"});
+  const com=h("textarea",{className:"inp",placeholder:"Comentario para el alumno (opcional al aprobar)",rows:2});
+  const quick=h("div",{className:"quick"},["Repetido","Técnica incorrecta","Foto no válida","Descripción poco clara"].map(q=>{const b=h("button",{type:"button",textContent:q});b.addEventListener("click",()=>{com.value=q+(com.value?". "+com.value:"");});return b;}));
+  const msg=h("p",{className:"err"});
+  const card=h("div",{className:"rev"});
+  const act=dec=>()=>{
+    if(dec!=="aprobar"&&!com.value.trim()){msg.textContent="Escribe un comentario o elige un motivo rápido.";return;}
+    btns.forEach(b=>b.disabled=true);msg.textContent="";
+    post({accion:"revisar",correo:user.correo,clave,id:it.id,decision:dec,nota:nota.value,comentario:com.value.trim()}).then(()=>{
+      card.remove();
+      const n=Math.max(0,Number($("revCount").textContent||0)-1);setRevCount(n);
+      if(!$("revBox").querySelector(".rev"))loadReview();
+      if(dec==="aprobar")getDatos().then(setData).catch(()=>{});
+    }).catch(e=>{msg.textContent=errMsg(e);btns.forEach(b=>b.disabled=false);});
+  };
+  const btns=[h("button",{className:"ap",textContent:"✓ Aprobar"}),h("button",{className:"co",textContent:"✎ Corregir"}),h("button",{className:"re",textContent:"✕ Rechazar"})];
+  btns[0].addEventListener("click",act("aprobar"));btns[1].addEventListener("click",act("corregir"));btns[2].addEventListener("click",act("rechazar"));
+  card.append(
+    it.foto?h("img",{src:it.foto,alt:it.nombre}):null,
+    h("div",{className:"rb"},
+      h("small",{className:"mat",textContent:it.alumno+" · "+it.grupo+" · "+fdate(it.fecha)}),
+      h("h3",{textContent:it.nombre}),
+      h("div",{className:"tags"},tagEls(it.tipos),h("span",{className:"tag",textContent:it.material,style:"--c:#4b5160"})),
+      h("p",{textContent:it.desc}),
+      h("div",{className:"similar"+(sim.length?" hit":"")},sim.length?"Parecidos en el banco: "+sim.map(e=>e.n).join(", "):"No hay ejercicios parecidos en el banco."),
+      h("div",{className:"row2"},h("label",{textContent:"Nota"}),nota),
+      com,quick,h("div",{className:"acts3"},btns),msg)
+  );
+  return card;
+}
+
 /* ---------- Login ---------- */
-function entrar(correo,silencioso){
+function entrar(correo,pass,silencioso){
   $("loginErr").textContent="";$("enter").disabled=true;$("enter").textContent="Entrando…";
-  return run("login",correo).then(a=>{
-    user=a;store.set("circuito-correo",a.correo);
-    $("whoName").textContent=a.nombre||a.correo;
-    show("setup");render();
+  return post({accion:"login",correo,clave:pass||""}).then(r=>{
+    if(r.necesitaClave){
+      $("passRow").hidden=false;show("login");
+      if(!silencioso||pass)$("loginErr").textContent="Este correo necesita contraseña.";
+      setTimeout(()=>$("pass").focus(),50);return;
+    }
+    user=r;clave=r.profesor?(pass||""):"";
+    store.set("circuito-correo",r.correo);
+    if(r.profesor)store.set("circuito-clave",clave);else store.del("circuito-clave");
+    $("whoName").textContent=r.nombre||r.correo;$("dName").textContent=r.nombre||r.correo;$("dGroup").textContent=r.grupo||"";
+    $("dReview").hidden=!r.profesor;
+    show("app");go("vTrain");refreshCount();
   }).catch(e=>{
-    store.del("circuito-correo");
-    if(!silencioso)$("loginErr").textContent=(e&&e.message||"No se ha podido entrar. Inténtalo de nuevo.").replace(/^Exception:\s*/,"").replace(/^Error:\s*/,"");
+    store.del("circuito-clave");
+    if(!silencioso)$("loginErr").textContent=errMsg(e);
     show("login");
   }).finally(()=>{$("enter").disabled=false;$("enter").textContent="Entrar";});
 }
 $("enter").addEventListener("click",()=>{
   const c=$("email").value.trim().toLowerCase();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)){$("loginErr").textContent="Escribe tu correo completo, por ejemplo usuario@g.educaand.es";return;}
-  entrar(c,false);
+  entrar(c,$("pass").value,false);
 });
-$("email").addEventListener("keydown",e=>{if(e.key==="Enter")$("enter").click();});
-$("logout").addEventListener("click",()=>{user=null;store.del("circuito-correo");$("email").value="";show("login");});
+$("email").addEventListener("input",()=>{$("passRow").hidden=true;$("pass").value="";});
+[$("email"),$("pass")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("enter").click();}));
+$("logout").addEventListener("click",()=>{closeMenu();user=null;clave="";store.del("circuito-correo");store.del("circuito-clave");$("email").value="";$("pass").value="";$("passRow").hidden=true;show("login");});
 
 /* ---------- Registro de actividad ---------- */
 let workout=null;
 function log(evento,extra){
   if(!user||!workout)return;
-  run("registrar",Object.assign({correo:user.correo,evento},workout,extra||{})).catch(()=>{});
+  post(Object.assign({accion:"registrar",correo:user.correo,evento},workout,extra||{}),true).catch(()=>{});
 }
 function describe(){
   const L=list();
@@ -570,7 +937,7 @@ function exit(){
   if(!done&&segs.length)log("Entreno abandonado",{real:Math.max(0,Math.round(elapsed()-skipped)),saltos:skips});
   done=true;running=false;clearInterval(tick);clearSched();
   if(lock){lock.release().catch(()=>{});lock=null;}
-  $("confirm").hidden=true;show("setup");render();
+  $("confirm").hidden=true;show("app");go("vTrain");
 }
 
 $("start").addEventListener("click",start);
@@ -582,14 +949,11 @@ $("yes").addEventListener("click",exit);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("run").hidden&&segs.length&&!done){if(running){wake();loop();}update();}});
 
 /* ---------- Arranque ---------- */
-run("getDatos").then(d=>{
-  EX=d.ejercicios;BY={};EX.forEach(e=>BY[e.id]=e);CIRCUITS=d.circuitos;
-  cfg.mine=(cfg.mine||[]).filter(id=>BY[id]);
-  if(!CIRCUITS.find(c=>c.id===cfg.preset)&&CIRCUITS.length)cfg.preset=CIRCUITS[0].id;
+getDatos().then(d=>{
+  setData(d);
   const guardado=store.get("circuito-correo");
-  if(guardado){$("email").value=guardado;entrar(guardado,true);}else show("login");
+  if(guardado){$("email").value=guardado;entrar(guardado,store.get("circuito-clave")||"",true);}else show("login");
 }).catch(()=>{
-  $("loadMsg").className="fatal";
   $("loadMsg").textContent="No se han podido cargar los ejercicios. Comprueba tu conexión y vuelve a abrir la app.";
 });
 })();

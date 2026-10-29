@@ -157,6 +157,16 @@ body{min-height:100%}
 #loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--muted);font-weight:600;padding:0 16px;text-align:center}
 #loading b{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--fg);text-transform:uppercase}
 #loading b span,#login h1 span,.logo span{color:var(--accent)}
+.lbar{width:min(260px,70vw);height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.lbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .2s linear}
+#lpct{font-family:var(--display);font-weight:900;font-size:1.4rem;color:var(--fg);font-variant-numeric:tabular-nums}
+#imgbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:15;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:700;color:var(--muted);box-shadow:0 6px 20px rgba(0,0,0,.35);white-space:nowrap}
+#imgbar .lbar{width:90px;height:6px}
+.simlist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.simcard{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr);gap:10px;background:var(--panel);border-radius:10px;padding:8px;align-items:start}
+.simcard img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:6px}
+.simcard b{display:block;font-size:.95rem;margin-bottom:4px}
+.simcard p{margin:6px 0 0;font-size:.84rem;line-height:1.4;color:var(--fg)}
 #login{max-width:440px;margin:0 auto;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 #login h1{font-family:var(--display);font-weight:900;font-size:3.2rem;line-height:1;margin:0;text-transform:uppercase}
 .lead{margin:0;color:var(--muted);font-size:1.02rem;line-height:1.45}
@@ -269,7 +279,8 @@ button.item:hover,button.item:focus-visible{outline-color:var(--accent)}
 </head>
 <body>
 
-<section id="loading"><b>Circuito<span>.</span></b><span id="loadMsg">Cargando ejercicios…</span></section>
+<section id="loading"><b>Circuito<span>.</span></b><div class="lbar"><i id="lfill"></i></div><span id="lpct">0%</span><span id="loadMsg">Conectando con el servidor…</span></section>
+<div id="imgbar" hidden><span id="imgtxt">Cargando fotos</span><div class="lbar"><i id="imgfill"></i></div></div>
 
 <section id="login" hidden>
   <div class="spacer"></div>
@@ -458,15 +469,58 @@ const fdate=iso=>{if(!iso)return"";const d=new Date(iso);return d.toLocaleDateSt
 let EX=[],BY={},CIRCUITS=[],MATS=["Sin material"],TIPOS=["Cardio","Tren superior","Tren inferior","Core"],user=null,clave="",view="vTrain";
 const TAGCOL={"cardio":"var(--cardio)","tren superior":"var(--sup)","tren inferior":"var(--inf)","core":"var(--core)"};
 const colorOf_=t=>TAGCOL[String(t).toLowerCase()]||"#6b7280";
-const img=id=>(BY[id]&&BY[id].img)||"";
+const fOf=id=>(BY[id]&&BY[id].f)||"";
 const tagEls=ids=>ids.map(t=>{const s=h("span",{className:"tag",textContent:t});s.style.setProperty("--c",colorOf_(t));return s;});
 const QUICK={
   tabata:{work:20,rest:10,exercises:8,rounds:1,roundRest:60,prep:10},
   hiit:{work:40,rest:20,exercises:6,rounds:2,roundRest:60,prep:10},
   circuito:{work:45,rest:15,exercises:6,rounds:3,roundRest:90,prep:10}
 };
+/* ---------- Fotos: se piden aparte y se guardan en el móvil ---------- */
+const IMG={};
+const PH="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 3"><rect width="4" height="3" fill="#e9ebee"/></svg>');
+const srcOf=n=>(n&&IMG[n])||PH;
+function mkImg(n,alt){const i=h("img",{src:srcOf(n),alt:alt||""});if(n)i.dataset.img=n;return i;}
+function setImg(el,n){el.dataset.img=n||"";el.src=srcOf(n);}
+function gotImg(n,uri){if(!n||!uri)return;IMG[n]=uri;document.querySelectorAll("img[data-img]").forEach(i=>{if(i.dataset.img===n)i.src=uri;});}
+const idb=(()=>{let dbp=null;
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{try{const r=indexedDB.open("circuito",1);r.onupgradeneeded=()=>r.result.createObjectStore("img");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}}));
+  return{
+    get:k=>open().then(db=>new Promise(res=>{try{const q=db.transaction("img").objectStore("img").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(undefined);}catch(e){res(undefined);}})).catch(()=>undefined),
+    set:(k,v)=>open().then(db=>{try{db.transaction("img","readwrite").objectStore("img").put(v,k);}catch(e){}}).catch(()=>{})
+  };})();
+function imgBar(done,total){
+  const bar=$("imgbar");
+  if(!total||done>=total){$("imgfill").style.width="100%";$("imgtxt").textContent="Fotos listas";setTimeout(()=>bar.hidden=true,700);return;}
+  bar.hidden=!$("run").hidden;$("imgtxt").textContent="Cargando fotos "+done+"/"+total;$("imgfill").style.width=Math.round(done/total*100)+"%";
+}
+let imgJob=null;
+function loadImages(){
+  if(imgJob)return imgJob;
+  imgJob=(async()=>{
+    const names=[...new Set(EX.map(e=>e.f).filter(Boolean))].filter(n=>!IMG[n]);
+    if(!names.length)return;
+    const total=names.length;let done=0;
+    const miss=[];
+    await Promise.all(names.map(n=>idb.get(n).then(v=>{if(v){gotImg(n,v);done++;}else miss.push(n);})));
+    if(!miss.length)return;
+    imgBar(done,total);
+    const batches=[];for(let i=0;i<miss.length;i+=4)batches.push(miss.slice(i,i+4));
+    let bi=0;
+    const worker=async()=>{while(bi<batches.length){const b=batches[bi++];
+      try{const r=await fetch(API+"?accion=img&n="+encodeURIComponent(b.join("|"))).then(unwrap);
+        b.forEach(n=>{if(r&&r[n]){gotImg(n,r[n]);idb.set(n,r[n]);}});}catch(e){}
+      done+=b.length;imgBar(done,total);}};
+    await Promise.all([worker(),worker(),worker()]);
+    imgBar(total,total);
+  })().finally(()=>{imgJob=null;});
+  return imgJob;
+}
+
 function setData(d){
-  EX=d.ejercicios;BY={};EX.forEach(e=>BY[e.id]=e);CIRCUITS=d.circuitos;
+  EX=d.ejercicios;BY={};
+  EX.forEach(e=>{BY[e.id]=e;if(!e.f)e.f=e.id;if(e.img&&String(e.img).indexOf("data:")===0)IMG[e.f]=e.img;});
+  CIRCUITS=d.circuitos;
   if(d.materiales&&d.materiales.length)MATS=d.materiales;
   if(d.tipos&&d.tipos.length)TIPOS=d.tipos;
   cfg.mine=(cfg.mine||[]).filter(id=>BY[id]);
@@ -484,7 +538,7 @@ const isTime=k=>!["exercises","rounds"].includes(k);
 
 /* ---------- Pantallas y menú ---------- */
 const SCREENS=["loading","login","app","run"];
-const show=id=>SCREENS.forEach(x=>$(x).hidden=x!==id);
+const show=id=>{SCREENS.forEach(x=>$(x).hidden=x!==id);if(id==="run")$("imgbar").hidden=true;};
 function openMenu(){$("drawer").hidden=false;$("scrim").hidden=false;}
 function closeMenu(){$("drawer").hidden=true;$("scrim").hidden=true;}
 $("menuBtn").addEventListener("click",openMenu);
@@ -515,7 +569,7 @@ function renderPresets(){
   $("pPreset").replaceChildren(...CIRCUITS.map(c=>{
     const b=h("button",{className:"circ"},
       h("div",{className:"circ-head"},h("div",null,h("h3",{textContent:c.n}),h("small",{textContent:(c.s?c.s+" · ":"")+c.ids.length+" ejercicios"})),h("span",{className:"check",textContent:"✓ Elegido"})),
-      h("div",{className:"thumbs"},c.ids.slice(0,8).map(id=>h("img",{src:img(id),alt:BY[id].n}))),
+      h("div",{className:"thumbs"},c.ids.slice(0,8).map(id=>mkImg(fOf(id),BY[id].n))),
       h("ol",null,c.ids.map(id=>h("li",{textContent:BY[id].n})))
     );
     b.setAttribute("aria-pressed",cfg.preset===c.id);
@@ -544,7 +598,7 @@ function renderBank(){
   $("bank").replaceChildren(...items.map(e=>{
     const count=cfg.mine.filter(x=>x===e.id).length;
     const b=h("button",{className:"ex"+(count?" on":"")},
-      h("img",{src:e.img,alt:""}),
+      mkImg(e.f,""),
       h("div",{className:"body"},h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t)),e.m!=="Sin material"?h("small",{className:"mat",textContent:"Material: "+e.m.toLowerCase()}):null,h("span",{className:"add",textContent:count?"+ Añadir otra vez":"+ Añadir"})),
       count?h("span",{className:"badge",textContent:count>1?"×"+count:"✓"}):null
     );
@@ -560,7 +614,7 @@ function renderMine(){
   $("mineList").replaceChildren(...m.map((id,i)=>{
     const mk=(t,lbl,fn,dis)=>{const b=h("button",{textContent:t,disabled:!!dis});b.setAttribute("aria-label",lbl);b.addEventListener("click",fn);return b;};
     const mv=d=>()=>{const j=i+d;[m[i],m[j]]=[m[j],m[i]];save();renderMine();};
-    return h("li",null,h("span",{className:"n",textContent:i+1}),h("img",{src:img(id),alt:""}),h("span",{className:"nm",textContent:BY[id].n}),
+    return h("li",null,h("span",{className:"n",textContent:i+1}),mkImg(fOf(id),""),h("span",{className:"nm",textContent:BY[id].n}),
       h("span",{className:"acts"},mk("▲","Subir",mv(-1),i===0),mk("▼","Bajar",mv(1),i===m.length-1),mk("✕","Quitar",()=>{m.splice(i,1);save();renderMine();renderBank();renderTotals();})));
   }));
 }
@@ -661,7 +715,7 @@ function renderExisting(){
   if(!ya.length){box.replaceChildren(h("p",null,"Todavía no hay ejercicios de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". ¡El tuyo puede ser el primero!"));return;}
   box.replaceChildren(
     h("p",null,"Ya hay ",h("b",{textContent:ya.length+(ya.length===1?" ejercicio":" ejercicios")})," de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". Comprueba que el tuyo no está:"),
-    h("div",{className:"minis"},ya.map(e=>h("div",{className:"mini"},h("img",{src:e.img,alt:""}),h("span",{textContent:e.n}))))
+    h("div",{className:"minis"},ya.map(e=>h("div",{className:"mini"},mkImg(e.f,""),h("span",{textContent:e.n}))))
   );
 }
 function checkSimilar(){
@@ -675,10 +729,10 @@ $("upDesc").addEventListener("input",()=>$("upCount").textContent=$("upDesc").va
 function resize(file){
   return new Promise((res,rej)=>{
     const url=URL.createObjectURL(file);const im=new Image();
-    im.onload=()=>{const max=1000,k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+    im.onload=()=>{const max=800,k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
       const c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
       const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
-      URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.8));};
+      URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.75));};
     im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("No se ha podido leer la foto. Prueba con otra."));};
     im.src=url;
   });
@@ -779,7 +833,7 @@ function revCard(it){
       card.remove();
       const n=Math.max(0,Number($("revCount").textContent||0)-1);setRevCount(n);
       if(!$("revBox").querySelector(".rev"))loadReview();
-      if(dec==="aprobar")getDatos().then(setData).catch(()=>{});
+      if(dec==="aprobar")getDatos().then(d=>{setData(d);loadImages();}).catch(()=>{});
     }).catch(e=>{msg.textContent=errMsg(e);btns.forEach(b=>b.disabled=false);});
   };
   const btns=[h("button",{className:"ap",textContent:"✓ Aprobar"}),h("button",{className:"co",textContent:"✎ Corregir"}),h("button",{className:"re",textContent:"✕ Rechazar"})];
@@ -792,7 +846,11 @@ function revCard(it){
       h("div",{className:"tags"},tagEls(it.tipos),h("span",{className:"tag",textContent:it.material,style:"--c:#4b5160"})),
       h("p",{textContent:it.desc}),
       /Reenviado corregido/.test(it.previo||"")?h("div",{className:"editbanner"},h("b",{textContent:"Reenvío corregido"}),h("span",{textContent:"Tu comentario anterior: "+it.previo.replace(/\s*·?\s*Reenviado corregido el .*$/,"")})):null,
-      h("div",{className:"similar"+(sim.length?" hit":"")},sim.length?"Parecidos en el banco: "+sim.map(e=>e.n).join(", "):"No hay ejercicios parecidos en el banco."),
+      h("div",{className:"similar"+(sim.length?" hit":"")},
+        sim.length?[h("b",{textContent:sim.length===1?"Parecido en el banco":"Parecidos en el banco ("+sim.length+")"}),
+          h("div",{className:"simlist"},sim.map(e=>h("div",{className:"simcard"},mkImg(e.f,e.n),
+            h("div",null,h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t),h("span",{className:"tag",textContent:e.m,style:"--c:#4b5160"})),h("p",{textContent:e.d})))))]
+          :"No hay ejercicios parecidos en el banco."),
       h("div",{className:"row2"},h("label",{textContent:"Nota"}),nota),
       com,quick,h("div",{className:"acts3"},btns),msg)
   );
@@ -800,9 +858,9 @@ function revCard(it){
 }
 
 /* ---------- Login ---------- */
-function entrar(correo,pass,silencioso){
+function entrar(correo,pass,silencioso,pre){
   $("loginErr").textContent="";$("enter").disabled=true;$("enter").textContent="Entrando…";
-  return post({accion:"login",correo,clave:pass||""}).then(r=>{
+  return (pre||post({accion:"login",correo,clave:pass||""})).then(r=>{
     if(r.necesitaClave){
       $("passRow").hidden=false;show("login");
       if(!silencioso||pass)$("loginErr").textContent="Este correo necesita contraseña.";
@@ -813,7 +871,7 @@ function entrar(correo,pass,silencioso){
     if(r.profesor)store.set("circuito-clave",clave);else store.del("circuito-clave");
     $("whoName").textContent=r.nombre||r.correo;$("dName").textContent=r.nombre||r.correo;$("dGroup").textContent=r.grupo||"";
     $("dReview").hidden=!r.profesor;
-    show("app");go("vTrain");refreshCount();
+    show("app");go("vTrain");refreshCount();loadImages();
   }).catch(e=>{
     store.del("circuito-clave");
     if(!silencioso)$("loginErr").textContent=errMsg(e);
@@ -909,7 +967,7 @@ function ink(hex){const n=parseInt(hex.slice(1),16),r=(n>>16)/255,g=(n>>8&255)/2
 function phaseColor(k){return k==="work"?cfg.cWork:k==="round"?cfg.cRound:cfg.cRest;}
 function showEx(s){
   const e=BY[exList[s.e-1]];
-  $("exImg").src=e.img;$("exImg").alt=e.n;
+  setImg($("exImg"),e.f);$("exImg").alt=e.n;
   $("exWhen").textContent=(s.k==="work"?"Ahora · ":"Siguiente · ")+s.e+"/"+E;
   $("exName").textContent=e.n;$("exDesc").textContent=e.d;
   $("exTags").replaceChildren(...tagEls(e.t));
@@ -988,12 +1046,24 @@ $("no").addEventListener("click",()=>$("confirm").hidden=true);
 $("yes").addEventListener("click",exit);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("run").hidden&&segs.length&&!done){if(running){wake();loop();}update();}});
 
-/* ---------- Arranque ---------- */
-getDatos().then(d=>{
-  setData(d);
-  const guardado=store.get("circuito-correo");
-  if(guardado){$("email").value=guardado;entrar(guardado,store.get("circuito-clave")||"",true);}else show("login");
+/* ---------- Arranque: datos y sesión a la vez, con barra de progreso ---------- */
+let lp=0,lt=55;
+const lt0=setInterval(()=>{lp+=(lt-lp)*0.06;$("lfill").style.width=lp.toFixed(1)+"%";$("lpct").textContent=Math.round(lp)+"%";},100);
+const lstage=(t,msg)=>{lt=t;if(msg)$("loadMsg").textContent=msg;};
+const lfinish=()=>{clearInterval(lt0);$("lfill").style.width="100%";$("lpct").textContent="100%";};
+const guardado=store.get("circuito-correo");
+const pDatos=getDatos().then(d=>{lstage(guardado?85:95,guardado?"Abriendo tu sesión…":"Casi listo…");return d;});
+const pLogin=guardado?post({accion:"login",correo:guardado,clave:store.get("circuito-clave")||""}).then(r=>({r}),e=>({e})):Promise.resolve(null);
+setTimeout(()=>{if(lp<60)$("loadMsg").textContent="Cargando ejercicios…";},2500);
+Promise.all([pDatos,pLogin]).then(([d,lg])=>{
+  setData(d);lfinish();
+  if(guardado){
+    $("email").value=guardado;
+    const pre=lg&&lg.r?Promise.resolve(lg.r):Promise.reject(lg&&lg.e);
+    entrar(guardado,store.get("circuito-clave")||"",true,pre);
+  }else{show("login");loadImages();}
 }).catch(()=>{
+  clearInterval(lt0);$("lpct").textContent="";
   $("loadMsg").textContent="No se han podido cargar los ejercicios. Comprueba tu conexión y vuelve a abrir la app.";
 });
 })();

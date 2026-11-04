@@ -267,6 +267,8 @@ button.item:hover,button.item:focus-visible{outline-color:var(--accent)}
 .rev{background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .rev>img{width:100%;max-height:360px;object-fit:contain;background:#fff}
 .rev .rb{padding:14px;display:flex;flex-direction:column;gap:10px}
+.rev .revname{resize:none;min-height:0;line-height:1.15;font-family:var(--display);font-weight:900;font-size:1.35rem;text-transform:uppercase;letter-spacing:.01em}
+.edithint{margin:0;font-size:.82rem!important;color:var(--muted);line-height:1.4}
 .rev h3{margin:0;font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;line-height:1}
 .rev p{margin:0;line-height:1.45;font-size:.95rem}
 .similar{font-size:.88rem;line-height:1.4;border-radius:8px;padding:8px 10px;background:var(--panel2)}
@@ -836,20 +838,42 @@ function loadReview(){
     setRevCount(r.total);
     if(!r.items.length){box.replaceChildren(h("div",{className:"empty2"},h("span",{textContent:"No hay propuestas pendientes."})));return;}
     const more=r.total>r.items.length?h("p",{className:"loadmsg",textContent:"Mostrando "+r.items.length+" de "+r.total+". Al revisar estas, recarga para ver más."}):null;
-    box.replaceChildren(...r.items.map(revCard),more);
+    box.replaceChildren(...r.items.map(revCard),...(more?[more]:[]));
   }).catch(e=>box.replaceChildren(h("p",{className:"err",textContent:errMsg(e)})));
 }
 function revCard(it){
-  const sim=parecidos(it.nombre,EX);
+  // Campos editables: el profesor puede corregir antes de decidir
+  const fName=h("textarea",{className:"inp revname",value:it.nombre,maxLength:80,rows:2});
+  fName.addEventListener("keydown",e=>{if(e.key==="Enter")e.preventDefault();});
+  const fDesc=h("textarea",{className:"inp",value:it.desc,maxLength:400,rows:4});
+  let tipos=it.tipos.filter(t=>TIPOS.includes(t));
+  const fTipos=h("div",{className:"chips"});
+  const drawTipos=()=>fTipos.replaceChildren(...TIPOS.map(t=>{const b=h("button",{type:"button"},h("i"),t);b.style.setProperty("--c",colorOf_(t));b.setAttribute("aria-pressed",tipos.includes(t));
+    b.addEventListener("click",()=>{if(tipos.includes(t))tipos=tipos.filter(x=>x!==t);else{tipos.push(t);if(tipos.length>2)tipos.shift();}drawTipos();});return b;}));
+  drawTipos();
+  const mats=MATS.includes(it.material)||!it.material?MATS:MATS.concat([it.material]);
+  const fMat=h("select",{className:"inp"},mats.map(m=>h("option",{value:m,textContent:m})));fMat.value=it.material||"Sin material";
+  const simBox=h("div");
+  const drawSim=()=>{const sim=parecidos(fName.value,EX);
+    simBox.className="similar"+(sim.length?" hit":"");
+    simBox.replaceChildren(...(sim.length?[h("b",{textContent:sim.length===1?"Parecido en el banco":"Parecidos en el banco ("+sim.length+")"}),
+      h("div",{className:"simlist"},sim.map(e=>h("div",{className:"simcard"},mkImg(e.f,e.n),
+        h("div",null,h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t),h("span",{className:"tag",textContent:e.m,style:"--c:#4b5160"})),h("p",{textContent:e.d})))))]
+      :["No hay ejercicios parecidos en el banco."]));};
+  drawSim();fName.addEventListener("input",drawSim);
   const nota=h("input",{className:"inp",type:"number",min:0,max:10,step:0.5,placeholder:"—"});
   const com=h("textarea",{className:"inp",placeholder:"Comentario para el alumno (opcional al aprobar)",rows:2});
   const quick=h("div",{className:"quick"},["Repetido","Técnica incorrecta","Foto no válida","Descripción poco clara"].map(q=>{const b=h("button",{type:"button",textContent:q});b.addEventListener("click",()=>{com.value=q+(com.value?". "+com.value:"");});return b;}));
   const msg=h("p",{className:"err"});
   const card=h("div",{className:"rev"});
   const act=dec=>()=>{
+    if(!fName.value.trim()){msg.textContent="El nombre no puede quedar vacío.";return;}
+    if(fDesc.value.trim().length<10){msg.textContent="La descripción es demasiado corta.";return;}
+    if(!tipos.length){msg.textContent="Elige al menos un tipo.";return;}
     if(dec!=="aprobar"&&!com.value.trim()){msg.textContent="Escribe un comentario o elige un motivo rápido.";return;}
     btns.forEach(b=>b.disabled=true);msg.textContent="";
-    post({accion:"revisar",correo:user.correo,clave,id:it.id,decision:dec,nota:nota.value,comentario:com.value.trim()}).then(()=>{
+    post({accion:"revisar",correo:user.correo,clave,id:it.id,decision:dec,nota:nota.value,comentario:com.value.trim(),
+      nombre:fName.value.trim(),desc:fDesc.value.trim(),tipos:tipos,material:fMat.value}).then(()=>{
       card.remove();
       const n=Math.max(0,Number($("revCount").textContent||0)-1);setRevCount(n);
       if(!$("revBox").querySelector(".rev"))loadReview();
@@ -862,15 +886,13 @@ function revCard(it){
     it.foto?h("img",{src:it.foto,alt:it.nombre}):null,
     h("div",{className:"rb"},
       h("small",{className:"mat",textContent:it.alumno+" · "+it.grupo+" · "+fdate(it.fecha)}),
-      h("h3",{textContent:it.nombre}),
-      h("div",{className:"tags"},tagEls(it.tipos),h("span",{className:"tag",textContent:it.material,style:"--c:#4b5160"})),
-      h("p",{textContent:it.desc}),
+      h("p",{className:"edithint",textContent:"✎ Puedes corregir el nombre, el tipo, el material o la descripción antes de decidir. Al alumno le llegará una nota con lo que cambiaste."}),
+      h("div",{className:"fld"},h("label",{className:"flabel",textContent:"Nombre"}),fName),
+      h("div",{className:"fld"},h("div",{className:"flabel",textContent:"Tipo (uno o dos)"}),fTipos),
+      h("div",{className:"fld"},h("label",{className:"flabel",textContent:"Material"}),fMat),
+      h("div",{className:"fld"},h("label",{className:"flabel",textContent:"Descripción"}),fDesc),
       /Reenviado corregido/.test(it.previo||"")?h("div",{className:"editbanner"},h("b",{textContent:"Reenvío corregido"}),h("span",{textContent:"Tu comentario anterior: "+it.previo.replace(/\s*·?\s*Reenviado corregido el .*$/,"")})):null,
-      h("div",{className:"similar"+(sim.length?" hit":"")},
-        sim.length?[h("b",{textContent:sim.length===1?"Parecido en el banco":"Parecidos en el banco ("+sim.length+")"}),
-          h("div",{className:"simlist"},sim.map(e=>h("div",{className:"simcard"},mkImg(e.f,e.n),
-            h("div",null,h("b",{textContent:e.n}),h("div",{className:"tags"},tagEls(e.t),h("span",{className:"tag",textContent:e.m,style:"--c:#4b5160"})),h("p",{textContent:e.d})))))]
-          :"No hay ejercicios parecidos en el banco."),
+      simBox,
       h("div",{className:"row2"},h("label",{textContent:"Nota"}),nota),
       com,quick,h("div",{className:"acts3"},btns),msg)
   );

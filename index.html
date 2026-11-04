@@ -238,6 +238,8 @@ select.inp{appearance:auto}
 .minis{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
 .mini{flex:0 0 92px;display:flex;flex-direction:column;gap:4px;font-size:.75rem;line-height:1.2}
 .mini img{width:92px;height:69px;object-fit:cover;border-radius:8px;background:#fff}
+.pendlist{display:flex;flex-wrap:wrap;gap:6px}
+.pendchip{font-size:.8rem;font-weight:600;border:1px dashed var(--line);border-radius:999px;padding:4px 10px;color:var(--fg)}
 .warn{margin:0;background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:10px;padding:10px 12px;font-size:.9rem;line-height:1.4}
 .photo{display:flex;align-items:center;justify-content:center;min-height:170px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);font-weight:600;text-align:center;padding:12px;cursor:pointer;overflow:hidden;background:var(--panel2)}
 .photo img{max-width:100%;max-height:320px;border-radius:8px;background:#fff}
@@ -476,7 +478,7 @@ const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""
 const fdate=iso=>{if(!iso)return"";const d=new Date(iso);return d.toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"})+" · "+d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});};
 
 /* ---------- Estado ---------- */
-let EX=[],BY={},CIRCUITS=[],MATS=["Sin material"],TIPOS=["Cardio","Tren superior","Tren inferior","Core"],user=null,clave="",view="vTrain";
+let PEND=[],EX=[],BY={},CIRCUITS=[],MATS=["Sin material"],TIPOS=["Cardio","Tren superior","Tren inferior","Core"],user=null,clave="",view="vTrain";
 const TAGCOL={"cardio":"var(--cardio)","tren superior":"var(--sup)","tren inferior":"var(--inf)","core":"var(--core)"};
 const colorOf_=t=>TAGCOL[String(t).toLowerCase()]||"#6b7280";
 const fOf=id=>(BY[id]&&BY[id].f)||"";
@@ -530,7 +532,7 @@ function loadImages(){
 function setData(d){
   EX=d.ejercicios;BY={};
   EX.forEach(e=>{BY[e.id]=e;if(!e.f)e.f=e.id;if(e.img&&String(e.img).indexOf("data:")===0)IMG[e.f]=e.img;});
-  CIRCUITS=d.circuitos;
+  CIRCUITS=d.circuitos;PEND=d.pendientes||[];
   if(d.materiales&&d.materiales.length)MATS=d.materiales;
   if(d.tipos&&d.tipos.length)TIPOS=d.tipos;
   cfg.mine=(cfg.mine||[]).filter(id=>BY[id]);
@@ -733,17 +735,25 @@ function renderExisting(){
   if(!up.tipos.length){box.hidden=true;return;}
   const mat=$("upMat").value;
   const ya=EX.filter(e=>e.m===mat&&e.t.some(t=>up.tipos.includes(t)));
+  const pend=PEND.filter(p=>p.id!==up.editId&&p.m===mat&&p.t.some(t=>up.tipos.includes(t)));
   box.hidden=false;
-  if(!ya.length){box.replaceChildren(h("p",null,"Todavía no hay ejercicios de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". ¡El tuyo puede ser el primero!"));return;}
-  box.replaceChildren(
-    h("p",null,"Ya hay ",h("b",{textContent:ya.length+(ya.length===1?" ejercicio":" ejercicios")})," de ",h("b",{textContent:up.tipos.join(" / ")})," con ",h("b",{textContent:mat.toLowerCase()}),". Comprueba que el tuyo no está:"),
-    h("div",{className:"minis"},ya.map(e=>h("div",{className:"mini"},mkImg(e.f,""),h("span",{textContent:e.n}))))
-  );
+  const tip=h("b",{textContent:up.tipos.join(" / ")}),mt=()=>h("b",{textContent:mat.toLowerCase()});
+  const parts=[];
+  if(!ya.length&&!pend.length){box.replaceChildren(h("p",null,"Todavía no hay ejercicios de ",tip," con ",mt(),". ¡El tuyo puede ser el primero!"));return;}
+  if(ya.length)parts.push(h("p",null,"En el banco ya hay ",h("b",{textContent:ya.length+(ya.length===1?" ejercicio":" ejercicios")})," de ",tip," con ",mt(),". Comprueba que el tuyo no está:"),
+    h("div",{className:"minis"},ya.map(e=>h("div",{className:"mini"},mkImg(e.f,""),h("span",{textContent:e.n})))));
+  if(pend.length)parts.push(h("p",null,h("b",{textContent:pend.length===1?"1 propuesta":pend.length+" propuestas"})," de compañeros pendiente"+(pend.length===1?"":"s")+" de revisar con este tipo y material:"),
+    h("div",{className:"pendlist"},pend.map(p=>h("span",{className:"pendchip",textContent:p.n}))));
+  box.replaceChildren(...parts);
 }
 function checkSimilar(){
   const p=parecidos($("upName").value,EX);
-  $("upSimilar").hidden=!p.length;
-  if(p.length)$("upSimilar").textContent="Se parece a: "+p.map(e=>e.n).join(", ")+". Si es el mismo ejercicio, mejor propón otro distinto.";
+  const q=parecidos($("upName").value,PEND.filter(x=>x.id!==up.editId));
+  $("upSimilar").hidden=!p.length&&!q.length;
+  const msg=[];
+  if(p.length)msg.push("En el banco ya hay: "+p.map(e=>e.n).join(", ")+".");
+  if(q.length)msg.push("Ya lo ha propuesto alguien y está pendiente de revisar: "+q.map(e=>e.n).join(", ")+".");
+  if(msg.length)$("upSimilar").textContent=msg.join(" ")+" Si es el mismo ejercicio, mejor propón otro distinto.";
 }
 $("upMat").addEventListener("change",renderExisting);
 $("upName").addEventListener("input",checkSimilar);
@@ -776,6 +786,7 @@ $("upSend").addEventListener("click",()=>{
   if(editando)body.id=up.editId;
   if(!editando||up.fotoNueva)body.foto=up.foto;
   post(body).then(()=>{
+    getDatos().then(setData).catch(()=>{});
     resetUpload();renderUpload();
     if(editando){go("vMine");return;}
     $("upErr").className="ok";$("upErr").textContent="¡Enviado! Tu profesor lo revisará. Puedes ver cómo va en «Mis ejercicios».";

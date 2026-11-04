@@ -160,6 +160,14 @@ body{min-height:100%}
 .lbar{width:min(260px,70vw);height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
 .lbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .2s linear}
 #lpct{font-family:var(--display);font-weight:900;font-size:1.4rem;color:var(--fg);font-variant-numeric:tabular-nums}
+#fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:14;width:min(608px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+#fab .fi{flex:1;min-width:0;font-size:.85rem;line-height:1.25;color:var(--muted)}
+#fab .fi b{display:block;color:var(--fg);font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fab button{border:0;border-radius:11px;font-weight:800;padding:11px 12px;white-space:nowrap;flex-shrink:0}
+#fabTimes{background:var(--panel2);color:var(--fg);font-size:.88rem}
+#fabGo{background:var(--accent);color:#14161a;font-family:var(--display);font-size:1.15rem;letter-spacing:.03em;text-transform:uppercase}
+body.hasfab #vTrain{padding-bottom:96px}
+body.hasfab #imgbar{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
 #imgbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:15;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:700;color:var(--muted);box-shadow:0 6px 20px rgba(0,0,0,.35);white-space:nowrap}
 #imgbar .lbar{width:90px;height:6px}
 .simlist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
@@ -337,7 +345,7 @@ button.item:hover,button.item:focus-visible{outline-color:var(--accent)}
       </div>
     </div>
 
-    <div class="group">
+    <div class="group" id="timesGroup">
       <h2>Tiempos</h2>
       <div class="row"><label>Trabajo</label><div class="step" data-k="work"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
       <div class="row"><label>Descanso<small>entre ejercicios</small></label><div class="step" data-k="rest"><button aria-label="Menos">−</button><output></output><button aria-label="Más">+</button></div></div>
@@ -407,6 +415,7 @@ button.item:hover,button.item:focus-visible{outline-color:var(--accent)}
   </section>
 </div>
 
+<div id="fab" hidden><div class="fi"><b id="fabInfo"></b><span id="fabTime"></span></div><button id="fabTimes">Tiempos ↓</button><button id="fabGo">▶ Empezar</button></div>
 <div id="scrim" hidden></div>
 <nav id="drawer" hidden aria-label="Menú">
   <div class="dhead"><b id="dName"></b><span id="dGroup"></span></div>
@@ -538,7 +547,7 @@ const isTime=k=>!["exercises","rounds"].includes(k);
 
 /* ---------- Pantallas y menú ---------- */
 const SCREENS=["loading","login","app","run"];
-const show=id=>{SCREENS.forEach(x=>$(x).hidden=x!==id);if(id==="run")$("imgbar").hidden=true;};
+const show=id=>{SCREENS.forEach(x=>$(x).hidden=x!==id);if(id==="run")$("imgbar").hidden=true;if(typeof updateFab==="function")updateFab();};
 function openMenu(){$("drawer").hidden=false;$("scrim").hidden=false;}
 function closeMenu(){$("drawer").hidden=true;$("scrim").hidden=true;}
 $("menuBtn").addEventListener("click",openMenu);
@@ -551,6 +560,7 @@ function go(v){
   document.querySelectorAll("#drawer [data-view]").forEach(b=>b.setAttribute("aria-current",b.dataset.view===v));
   $("totalBox").hidden=v!=="vTrain";
   window.scrollTo(0,0);
+  updateFab();
   if(v==="vTrain")render();
   if(v==="vUpload")renderUpload();
   if(v==="vMine")loadMine();
@@ -622,7 +632,19 @@ function renderTotals(){
   const L=list(),ok=!L||L.length>0;
   $("start").disabled=!ok;
   $("totalTime").textContent=ok?fmt(build().reduce((a,s)=>a+s.d,0)):"0:00";
+  updateFab();
 }
+/* ---------- Barra flotante en "Crear el mío" ---------- */
+let timesVisible=false;
+function updateFab(){
+  const n=cfg.mine.length;
+  const on=!$("app").hidden&&view==="vTrain"&&cfg.mode==="custom"&&n>0&&!timesVisible;
+  $("fab").hidden=!on;document.body.classList.toggle("hasfab",view==="vTrain"&&cfg.mode==="custom"&&n>0);
+  if(on){$("fabInfo").textContent=n+(n===1?" ejercicio":" ejercicios");$("fabTime").textContent="Total "+$("totalTime").textContent;}
+}
+try{new IntersectionObserver(es=>{es.forEach(e=>timesVisible=e.isIntersecting);updateFab();},{threshold:0.15}).observe($("timesGroup"));}catch(e){}
+$("fabTimes").addEventListener("click",()=>$("timesGroup").scrollIntoView({behavior:"smooth",block:"start"}));
+$("fabGo").addEventListener("click",()=>$("start").click());
 function render(){
   document.querySelectorAll("[data-mode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mode===cfg.mode));
   $("pPreset").hidden=cfg.mode!=="preset";$("pCustom").hidden=cfg.mode!=="custom";$("pTimer").hidden=cfg.mode!=="timer";

@@ -220,6 +220,11 @@ select.inp{appearance:auto}
 
 /* Filtros extra del banco */
 .bankfilters{display:flex;flex-direction:column;gap:10px;margin:8px 0 12px}
+.searchbox{position:relative;display:flex;align-items:center}
+.searchbox>span{position:absolute;left:13px;top:50%;transform:translateY(-50%);display:flex;color:var(--muted);pointer-events:none}
+.searchbox input{padding-left:38px;padding-right:40px}
+.searchbox input::-webkit-search-cancel-button{display:none}
+.searchbox button{position:absolute;right:6px;width:32px;height:32px;border:0;border-radius:8px;background:var(--line);font-weight:800}
 .matsel{display:flex;align-items:center;gap:10px}
 .matsel label{font-weight:700;font-size:.85rem;color:var(--muted);white-space:nowrap}
 .matsel select{flex:1;min-width:0;padding:9px 10px;font-size:.95rem}
@@ -334,6 +339,7 @@ button.item:hover,button.item:focus-visible{outline-color:var(--accent)}
       </div>
       <div class="label" style="margin-top:18px">Banco de ejercicios</div>
       <div class="bankfilters">
+        <div class="searchbox"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></span><input class="inp" id="bankSearch" type="search" placeholder="Buscar ejercicio (nombre, material, músculo…)" autocomplete="off" enterkeyhint="search"><button type="button" id="bankClear" aria-label="Borrar búsqueda" hidden>✕</button></div>
         <div class="filters" id="filters"></div>
         <div class="matsel"><label for="matFilter">Material</label><select class="inp" id="matFilter"></select></div>
       </div>
@@ -605,9 +611,37 @@ function renderFilters(){
   $("matFilter").value=used.includes(matFilter)?matFilter:"all";
 }
 $("matFilter").addEventListener("change",()=>{matFilter=$("matFilter").value;renderBank();});
+/* ---------- Buscador del banco: sin acentos ni mayúsculas, tolera plurales y erratas ---------- */
+let bankQuery="";
+const stem=w=>w.length>4?w.replace(/(es|s)$/,""):w;
+function lev1(a,b){ // ¿distancia de edición ≤ 1?
+  if(Math.abs(a.length-b.length)>1)return false;
+  let i=0,j=0,d=0;
+  while(i<a.length&&j<b.length){
+    if(a[i]===b[j]){i++;j++;continue;}
+    if(++d>1)return false;
+    if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++;}
+  }
+  return d+(a.length-i)+(b.length-j)<=1;
+}
+function wordHit(q,words){
+  const qs=stem(q);
+  return words.some(t=>{const ts=stem(t);
+    return t.includes(q)||ts.includes(qs)||(qs.length>=5&&(lev1(qs,ts)||lev1(qs,ts.slice(0,qs.length))));});
+}
+function searchScore(e){
+  const qw=norm(bankQuery).split(" ").filter(Boolean);
+  if(!qw.length)return 1;
+  const nameW=norm(e.n).split(" "),allW=norm([e.n,e.m,e.t.join(" "),e.d].join(" ")).split(" ");
+  if(!qw.every(q=>wordHit(q,allW)))return 0;
+  return qw.every(q=>wordHit(q,nameW))?2:1;   // primero los que coinciden en el nombre
+}
+$("bankSearch").addEventListener("input",()=>{bankQuery=$("bankSearch").value;$("bankClear").hidden=!bankQuery;renderBank();});
+$("bankClear").addEventListener("click",()=>{$("bankSearch").value="";bankQuery="";$("bankClear").hidden=true;renderBank();$("bankSearch").focus();});
 function renderBank(){
-  const items=EX.filter(e=>(filter==="all"||e.t.includes(filter))&&(matFilter==="all"||e.m===matFilter));
-  if(!items.length){$("bank").replaceChildren(h("p",{className:"empty",textContent:"No hay ejercicios con esos filtros."}));return;}
+  let items=EX.filter(e=>(filter==="all"||e.t.includes(filter))&&(matFilter==="all"||e.m===matFilter));
+  if(norm(bankQuery)){const sc=new Map(items.map(e=>[e,searchScore(e)]));items=items.filter(e=>sc.get(e)>0).sort((a,b)=>sc.get(b)-sc.get(a));}
+  if(!items.length){$("bank").replaceChildren(h("p",{className:"empty",textContent:norm(bankQuery)?"No hay ejercicios que coincidan con «"+bankQuery.trim()+"»"+(filter!=="all"||matFilter!=="all"?" con estos filtros.":"."):"No hay ejercicios con esos filtros."}));return;}
   $("bank").replaceChildren(...items.map(e=>{
     const count=cfg.mine.filter(x=>x===e.id).length;
     const b=h("button",{className:"ex"+(count?" on":"")},
